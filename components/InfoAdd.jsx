@@ -1,16 +1,5 @@
-import { useEffect, useState } from "react";
-import Box from "@mui/material/Box";
-import FilledInput from "@mui/material/FilledInput";
-import FormControl from "@mui/material/FormControl";
-import FormHelperText from "@mui/material/FormHelperText";
-import Input from "@mui/material/Input";
-import InputLabel from "@mui/material/InputLabel";
-import OutlinedInput from "@mui/material/OutlinedInput";
-import useSWR, { useSWRConfig }  from "swr";
-
+import useSWR, { useSWRConfig } from "swr";
 import axios from "axios";
-
-
 import {
   Button,
   Container,
@@ -19,36 +8,64 @@ import {
   List,
   TextField,
   Stack,
+  Paper,
 } from "@mui/material";
 import { useForm } from "react-hook-form";
-import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-
-
+import moment from "moment";
 const fetcher = (url) => axios.get(url).then((response) => response.data);
+import * as yup from "yup";
 
-const InfoAdd = ({onSubmit}) => {
-  const {data:foodEntries, error,mutate} = useSWR('/api/entryList',fetcher);
+export const Entryschema = yup.object().shape({
+  foodName: yup
+    .string()
+    .typeError(
+      "Food Name must contain only letters. No number or Special Character"
+    )
+    .required("Food Name must be a string")
+    .matches(/^[a-zA-Z\s]*$/, "Don't look like a valid food name !!"),
+  calorieValue: yup
+    .string()
+    .typeError("Calorie must be a number")
+    .required("calorie value must be a number")
+    .matches(/^\d*[1-9]+\d*$/, "Must Be Positive Number"),
+  takenAt:yup
+    .date()
+    .typeError("Invalid Date")
+    .required(),
+});
 
-  const schema = yup.object().shape({
-    name: yup
-      .string()
-      .typeError("Food Name must contain only letters. No number or Special Character")
-      .required("Food Name must be a string")
-      .matches(/^[a-zA-Z\s]*$/, "Don,t look like a valid food name !!"),
-    calorieValue: yup
-      .number()
-      .typeError("Calorie must be a number")
-      .positive("Calorie must be positive")
-      .integer(),
-    takenAt: yup
-      .string()
-      .required("Fill Up Date-Time")
-      .matches(
-        /([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])):((0[1-9]|1[0-2])([AaPp][Mm]))/,
-        "Date-Time must follow the format: YYYY-MM-DD:HHAM/PM"
-      ),
-  });
+const InfoAdd = ({ sessionUser }) => {
+  const {
+    data: foodEntries,
+    error,
+    mutate,
+  } = useSWR("/api/entryList", fetcher);
+  const saveFoodEntry = async (new_data) => {
+    const { id, ...dataWithoutIndex } = new_data;
+    try {
+      await fetch("/api/foodEntry", {
+        method: "POST",
+        body: JSON.stringify(dataWithoutIndex),
+      });
+      mutate();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const onSubmit = (data) => {
+    const { takenAt, ...restData } = data;
+    const d = moment(takenAt,"DD/MM/YYYY hh:mm A");
+    let new_data = {
+      id: "",
+      userEmail: sessionUser.email,
+      takenAt: String(d._i),
+      ...restData,
+    };
+    mutate([...foodEntries, new_data], false);
+    saveFoodEntry(new_data);
+  };
 
   const {
     register,
@@ -56,62 +73,71 @@ const InfoAdd = ({onSubmit}) => {
     handleSubmit,
     formState: { errors },
   } = useForm({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(Entryschema),
   });
 
   return (
-    <Container>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack
-          spacing={2}
-          sx={{
-            alignItems: "center",
-            // backgroundColor: "red",
-          }}
-        >
-          <TextField
-            id="outlined-error-helper-text"
-            label={errors.name?.message}
-            defaultValue="Food"
-            // helperText={errors.foodname?.message}
-            {...register("name")}
+    
+      <Paper
+        elevation={3}
+        sx={{
+          width: 800,
+          height: 400,
+          margin: "auto",
+        }}
+      >
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Stack
+            spacing={2}
             sx={{
-              width: "20%",
-              marginTop: "10px",
+              alignItems: "center",
             }}
-          />
+          >
+            <TextField
+              id="outlined-error-helper-text"
+              label={errors.foodName?.message}
+              defaultValue="Food"
+              {...register("foodName")}
+              sx={{
+                width: "50%",
+                marginTop: "40px",
+              }}
+            />
 
-          <TextField
-            id="outlined-error-helper-text"
-            label={errors.calorieValue?.message}
-            defaultValue="20"
-            // helperText={errors.calorie?.message}
-            {...register("calorieValue")}
-            sx={{
-              width: "20%",
-              marginTop: "10px",
-            }}
-          />
-          <TextField
-            id="outlined-error-helper-text"
-            label={errors.takenAt?.message}
-            defaultValue="2022-12-28:10AM"
-            // helperText={errors.calorie?.message}
-            {...register("takenAt")}
-            sx={{
-              width: "20%",
-              marginTop: "10px",
-            }}
-          />
-          <Button variant="contained" type="submit">
-            submit
-          </Button>
-        </Stack>
-      </form>
-    </Container>
+            <TextField
+              id="outlined-error-helper-text"
+              label={errors.calorieValue?.message}
+              defaultValue="20"
+              {...register("calorieValue")}
+              sx={{
+                width: "50%",
+                marginTop: "20px",
+              }}
+            />
+            <TextField
+              id="outlined-error-helper-text"
+              label={errors.takenAt?.message}
+              type="datetime-local"
+              {...register("takenAt")}
+              sx={{
+                width: "50%",
+                marginTop: "20px",
+              }}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+            <Button variant="contained" type="submit">
+              submit
+            </Button>
+          </Stack>
+        </form>
+      </Paper>
+      
+    
   );
 };
 
 export default InfoAdd;
 
-// ##########################################
+
