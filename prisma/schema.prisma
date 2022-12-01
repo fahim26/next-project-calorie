@@ -16,7 +16,8 @@ model FoodEntry {
   // id  String  @id @default(uuid())
   userEmail  String
   foodName String @db.VarChar(50)
-  calorieValue String @db.VarChar(20)
+  // calorieValue String @db.VarChar(20)
+  calorieValue Int
   takenAt String
 
 }

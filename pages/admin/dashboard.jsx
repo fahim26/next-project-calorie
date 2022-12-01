@@ -22,7 +22,7 @@ export async function getStaticProps () {
 
 
 
-export default function dashboard({fallback}){
+export default function dashboard(){
   const { data: session, status } = useSession();
   if (status === "loading") {
     return <p>Loading...</p>
@@ -40,9 +40,9 @@ export default function dashboard({fallback}){
   }
 
   return (
-    <SWRConfig value={{ fallback }}>
+    // <SWRConfig value={{ fallback }}>
       <EntryListAdmin />
-      </SWRConfig>
+      // </SWRConfig>
   );
 }
 

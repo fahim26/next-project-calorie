@@ -25,10 +25,15 @@ export const Entryschema = yup.object().shape({
     .required("Food Name must be a string")
     .matches(/^[a-zA-Z\s]*$/, "Don't look like a valid food name !!"),
   calorieValue: yup
-    .string()
-    .typeError("Calorie must be a number")
-    .required("calorie value must be a number")
-    .matches(/^\d*[1-9]+\d*$/, "Must Be Positive Number"),
+    .number()
+    .test(
+      'Is positive?', 
+      'ERROR: The number must be greater than 0!', 
+      (value) => value > 0
+    ),
+    // .typeError("Calorie must be a number")
+    // .required("calorie value must be a number")
+    // .matches(/^\d*[1-9]+\d*$/, "Must Be Positive Number"),
   takenAt:yup
     .date()
     .typeError("Invalid Date")

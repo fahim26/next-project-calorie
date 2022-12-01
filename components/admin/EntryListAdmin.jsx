@@ -9,23 +9,37 @@ import CancelIcon from "@mui/icons-material/Close";
 import { GridRowModes, DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import axios from "axios";
 import React, { useState } from "react";
-import useSWR, { mutate, useSWRConfig } from "swr";
+import useSWR, {useSWRConfig } from "swr";
 
 import moment from "moment";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
-import { entryDelete, entryUpdate, EntryCreate, schemaObject } from "./AdminCRUD";
+import {
+  schemaObject,
+} from "./AdminCRUD";
+
+import AVG_CALORIE from "./AVG_CALORIE";
+import Entries from "./Entries";
+import AVGEntries from "./AVGEntries";
 const fetcher = (url) => axios.get(url).then((response) => response.data);
 
 EditToolbar.propTypes = {
   setRowModesModel: PropTypes.func.isRequired,
-  setRows: PropTypes.func.isRequired,
+  setAddedRows: PropTypes.func.isRequired,
+  addedRows: PropTypes.object,
+  rowModesModel: PropTypes.object,
+  rows: PropTypes.object,
 };
 
-const EntryListAdmin = ({fallback}) => {
-  const { data, error, mutate } = useSWR("/api/entryList", fetcher);
-
-  const [rows, setRows] = useState(data);
+const EntryListAdmin = () => {
+  // const { mutate:mutateAvg } = useSWRConfig()
+  const { avgRows , isLoadingAvg , mutateAvg } = AVGEntries();
+  // const { data: rows, error, mutate } = useSWR("/api/entryList", fetcher);
+  const { rows, isLoading,mutate } = Entries();
+  // const { mutate } = useSWRConfig();
+  // const { avgRows , isLoadingAvg , mutateAvg } = AVGEntries();
+  // console.log("rows type", avgRows);
+  const [addedRows, setAddedRows] = useState();
   const [rowModesModel, setRowModesModel] = useState({});
   const [snackbar, setSnackbar] = useState(null);
   const handleCloseSnackbar = () => setSnackbar(null);
@@ -36,64 +50,120 @@ const EntryListAdmin = ({fallback}) => {
     event.defaultMuiPrevented = true;
   };
   const handleEditClick = (id) => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+    if (
+      Object.keys(rowModesModel).length === 0 &&
+      typeof addedRows == "undefined"
+    ) {
+      setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+    }
   };
-  const handleSaveClick = (id) => async () => {
+  const handleSaveClick = (id) => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
   };
-  const handleDeleteClick = (id) => () => {
-    setRows(rows.filter((row) => row.id !== id));
-    entryDelete(id);
+
+  const handleDeleteClick = (id) => async () => {
+    
+    await mutate(
+      async (rows) => {
+        await fetch("/api/foodEntry", {
+          method: "PUT",
+          body: JSON.stringify(id),
+        });
+
+        const filteredRows = rows.filter((row) => row.id !== id);
+        console.log("filteredRows : ", filteredRows);
+        return filteredRows;
+      },
+      { revalidate: true }
+    );
+    
   };
   const handleCancelClick = (id) => () => {
     setRowModesModel({
       ...rowModesModel,
       [id]: { mode: GridRowModes.View, ignoreModifications: true },
     });
+    setAddedRows();
     const editedRow = rows.find((row) => row.id === id);
-    if (editedRow.isNew) {
-      setRows(rows.filter((row) => row.id !== id));
+    if (editedRow?.isNew) {
+      const uData = rows.filter((row) => row.id !== id);
+      mutate([uData], false);
     }
   };
-  const mutateRow = EntryCreate();
-  const update_Row = entryUpdate();
+
   const handleProcessRowUpdateError = React.useCallback((error) => {
     setSnackbar({ children: "Field cannot be empty", severity: "error" });
   }, []);
 
-  const processRowUpdate = React.useCallback(
-    async (newRow) => {
-      const input_date = moment(newRow.takenAt);
-      const updatedRow = {
-        ...newRow,
-        takenAt: String(input_date._i),
-        isNew: false,
-      };
-      const { id, isNew, ...rowDB } = updatedRow;
-      let response;
-      if (newRow.isNew) {
-        response = await mutateRow(rowDB);
-        setSnackbar({
-          children: "User successfully saved",
-          severity: "success",
-        });
-        const data = await mutate();
-        setRows(data);
-        let new_id = Math.max(...data.map((o) => o.id));
-        const returnedRow = {
-          id: new_id,
-          ...response,
-        };
-        return returnedRow;
-      } else {
-        response = await update_Row({ ...rowDB, id });
-        return response;
-      }
-    },
-    [mutateRow, update_Row]
-  );
+  const processRowUpdate = React.useCallback(async (newRow) => {
+    const input_date = moment(newRow.takenAt);
+    const updatedRow = {
+      ...newRow,
+      takenAt: String(input_date._i),
+      isNew: false,
+    };
+    const { isNew, ...resp } = updatedRow;
+    const { id, ...rowDB } = resp;
 
+    if (newRow.isNew) {
+      mutate(
+        async (rows) => {
+          const updatedTodo = await fetch("/api/foodEntry", {
+            method: "POST",
+            body: JSON.stringify(rowDB),
+          });
+          const addedRow = await updatedTodo.json();
+          console.log(" 000000000  in mutation 000000000");
 
+          return [...rows, addedRow];
+        },
+        { revalidate: false }
+      );
+      // mutateAvg();
+      mutateAvg(
+        async () => {
+          const avgRows = await fetch("/api/avgCalorie", {
+            method: "GET",
+            body: JSON.stringify(),
+          });
+          const avgRowsNew = await avgRows.json();
+          console.log(" 000000000  in mutation 000000000",avgRowsNew);
+
+          return avgRowsNew;
+        },
+        { revalidate: true }
+      );
+      // mutateAvg();
+      console.log("00008988889:", avgRows);
+      setAddedRows();
+
+      setSnackbar({
+        children: "User successfully saved",
+        severity: "success",
+      });
+
+      return resp;
+    } else {
+      const options = { optimisticData: resp, rollbackOnError: true };
+
+      mutate(
+        async (rows) => {
+          const updatedTodo = await fetch("/api/updateList", {
+            method: "PUT",
+            body: JSON.stringify(resp),
+          });
+          const updateRow = await updatedTodo.json();
+
+          const filteredTodos = rows.filter((todo) => todo.id !== id);
+
+          return [...filteredTodos, updateRow];
+        },
+        { revalidate: false }
+      );
+
+      return resp;
+    }
+  }, []);
 
   const columns = [
     {
@@ -163,7 +233,9 @@ const EntryListAdmin = ({fallback}) => {
       headerClassName: "super-app-theme--header",
       headerAlign: "center",
       cellClassName: "actions",
-      getActions: ({ id }) => {
+      getActions: (params) => {
+        const id = params.id;
+
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
 
         if (isInEditMode) {
@@ -181,6 +253,13 @@ const EntryListAdmin = ({fallback}) => {
               color="inherit"
             />,
           ];
+        }
+
+        if (
+          !isNaN(parseInt(Object.keys(rowModesModel)[0])) &&
+          parseInt(Object.keys(rowModesModel)[0]) !== id
+        ) {
+          return [];
         }
 
         return [
@@ -202,10 +281,12 @@ const EntryListAdmin = ({fallback}) => {
     },
   ];
 
+  const newR = addedRows ? [...rows, addedRows] : rows;
+  console.log("added Rows ==== " , addedRows);
   return (
     <Box
       sx={{
-        height: 500,
+        height: 700,
         width: "100%",
         backgroundColor: "#ccfff9",
         "& .Mui-error": {
@@ -215,7 +296,7 @@ const EntryListAdmin = ({fallback}) => {
       }}
     >
       <DataGrid
-        rows={rows}
+        rows={rows ? newR : []}
         columns={columns}
         editMode="row"
         rowModesModel={rowModesModel}
@@ -246,13 +327,20 @@ const EntryListAdmin = ({fallback}) => {
           Toolbar: EditToolbar,
         }}
         componentsProps={{
-          toolbar: { setRows, setRowModesModel },
+          toolbar: {
+            setAddedRows,
+            setRowModesModel,
+            addedRows,
+            rowModesModel,
+            rows,
+          },
         }}
         experimentalFeatures={{
           newEditingApi: true,
           preventCommitWhileValidating: true,
         }}
       />
+      <AVG_CALORIE avgRows={avgRows}/>
       {!!snackbar && (
         <Snackbar
           open

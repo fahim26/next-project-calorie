@@ -20,8 +20,11 @@ export default async (req, res) => {
   if (req.method === "POST") {
     try {
       const data = JSON.parse(req.body);
-      await prisma.FoodEntry.create({ data });
-      res.status(200).json({ message: "Successfully created" });
+      const d = await prisma.FoodEntry.create({ data });
+      // console.log("-- %%%% ---- %%%% ---- %%%% ---- %%%% ---- %%%%");
+      // console.log(d);
+      res.send(d);
+      // res.status(200).json({d, message: "Successfully created" });
     } catch (e) {
       res.status(500).json({ message: "Something went wrong" });
     }
