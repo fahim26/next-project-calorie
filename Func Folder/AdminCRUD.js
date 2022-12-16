@@ -103,7 +103,31 @@ import React from "react";
 //   // }
 // // };
 
+export async function mutationAddRows(rows,rowDB){
+  console.log( "hiiiiiiiiiiiiiiiiiiiiii");
+  console.log(rows);
+  console.log(rowDB); 
+  const updatedTodo = await fetch("/api/foodEntry", {
+    method: "POST",
+    body: JSON.stringify(rowDB),
+  });
+  const addedRow = await updatedTodo.json();
+  console.log(" 000000000  in mutation 000000000");
 
+  return [...rows, addedRow];
+}
+
+
+export async function mutateAvgCalorie(){
+  const avgRows = await fetch("/api/avgCalorie", {
+    method: "GET",
+    body: JSON.stringify(),
+  });
+  const avgRowsNew = await avgRows.json();
+  console.log(" 000000000  in mutation 000000000",avgRowsNew);
+
+  return avgRowsNew;
+};
 
 
 export const schemaObject = {

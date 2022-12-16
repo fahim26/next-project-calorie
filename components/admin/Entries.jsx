@@ -6,13 +6,13 @@ const fetcher = (url) => axios.get(url).then((response) => response.data);
 
 const Entries =  () => {
     const { data, error,mutate } = useSWR("/api/entryList", fetcher);
-  
     return {
-      rows: data,
+      foodRows: data,
       isLoading: !error && !data,
       isError: error,
-      mutate: mutate,
+      mutateEntry: mutate,
     }
   }
 
   export default Entries;
+

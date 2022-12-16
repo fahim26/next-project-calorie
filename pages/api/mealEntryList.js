@@ -8,47 +8,23 @@ export default async (req, res) => {
   if(req.method !== "GET"){
     return res.status(405).json({message: "Method dis-allowed"});
   }
-  // console.log(" ------------- Params -------------- :",req.query.userEmail);
+  console.log(" ------------- Params Meals -------------- :",req.query.userEmail);
   let today = Math.floor(Date.now() / 1000);
     // let day = today.getDate();
   let lastWeek = today - 7*24*3600;
   let last2Week = lastWeek - 7*24*3600;
   
   try{
-    const foodEntries = await prisma.FoodEntry.findMany({
-      orderBy:[
-        {
-          id:'desc',
-        },
-      ],
-    });
-
-
-    const foodEntriesLastWeek = await prisma.FoodEntry.findMany({
-      
-      where: {
-        takenAt:{
-          gte: lastWeek,
-        },
-      },
-      
-    });
-
-    const foodEntriesLast2Week = await prisma.FoodEntry.findMany({
-        
+    
+      const foodEntriesPerEmail = await prisma.MealEntry.findMany({
         where: {
-          takenAt:{
-            gte: last2Week,
-            lt: lastWeek,
-          },
+          userEmail: req.query.userEmail,
         },
-        
+
       });
 
 
-
-
-      console.log("###################################################### ",foodEntriesLastWeek,">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",foodEntriesLast2Week);
+      console.log("############################# Meals ######################### ",foodEntriesPerEmail);
     // const today = moment();
     // const res = Array(7)
     //   .fill()
@@ -66,7 +42,7 @@ export default async (req, res) => {
     // res.status(200).json([foodEntriesLastWeek.length,foodEntriesLast2Week.length]);
 
 
-    res.status(200).json([foodEntries,foodEntriesLastWeek.length,foodEntriesLast2Week.length]);
+    res.status(200).json(foodEntriesPerEmail);
   }catch(e){
     res.status(500).json({message:"Something went wrong"});
   }

@@ -4,21 +4,26 @@ import EntryListAdmin from "../../components/admin/EntryListAdmin"
 import { PrismaClient } from "@prisma/client";
 import useSWR, { useSWRConfig,SWRConfig } from 'swr';
 import { useSession, signIn,signOut } from "next-auth/react";
-const fetcher = (url) => axios.get(url).then((response) => response.data);
+
+import TwoWeekReport from '../../components/admin/TwoWeekReport';
+import { Box } from '@mui/material';
+import TestC from '../../components/TestC';
+import WrapperComAdmin from '../../components/admin/WrapperComAdmin';
 
 
 
-export async function getStaticProps () {
-  const prisma = new PrismaClient();
-  const foodEntry = await prisma.FoodEntry.findMany();
-  return {
-    props: {
-      fallback: {
-        '/api/entryList': foodEntry
-      }
-    }
-  }
-}
+
+// export async function getStaticProps () {
+//   const prisma = new PrismaClient();
+//   const foodEntry = await prisma.FoodEntry.findMany();
+//   return {
+//     props: { 
+//       fallback: {
+//         '/api/entryList': foodEntry
+//       }
+//     }
+//   }
+// }
 
 
 
@@ -41,7 +46,9 @@ export default function dashboard(){
 
   return (
     // <SWRConfig value={{ fallback }}>
-      <EntryListAdmin />
+     <Box>
+      <WrapperComAdmin userSession={session.user}/>
+    </Box>
       // </SWRConfig>
   );
 }

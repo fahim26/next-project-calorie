@@ -1,20 +1,25 @@
 import useSWR, { useSWRConfig } from "swr";
 import axios from "axios";
 import {
-  Button,
-  Container,
-  FormGroup,
-  Grid,
-  List,
-  TextField,
-  Stack,
-  Paper,
+  Button, TextField, Stack,  Paper, MenuItem, Box, Snackbar, Alert,
 } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import moment from "moment";
-const fetcher = (url) => axios.get(url).then((response) => response.data);
+
 import * as yup from "yup";
+import { show_time } from "../Func Folder/dateTimeModification";
+import { MealsList } from "../Func Folder/MealsList";
+import FoodEntryList from "./FoodEntryList";
+import { useState } from "react";
+import MealDataGridForUser from "./MealDataGridForUser";
+import MealsApiCall from "./admin/MealsApiCall";
+import EntryListAdmin from "./admin/EntryListAdmin";
+
+const fetcherForUserInfo = (url, userEmail) =>
+  axios
+    .get(url, { params: { userEmail: userEmail } })
+    .then((response) => response.data);
 
 export const Entryschema = yup.object().shape({
   foodName: yup
@@ -27,49 +32,130 @@ export const Entryschema = yup.object().shape({
   calorieValue: yup
     .number()
     .test(
-      'Is positive?', 
-      'ERROR: The number must be greater than 0!', 
+      "Is positive?",
+      "ERROR: The number must be greater than 0!",
       (value) => value > 0
     ),
-    // .typeError("Calorie must be a number")
-    // .required("calorie value must be a number")
-    // .matches(/^\d*[1-9]+\d*$/, "Must Be Positive Number"),
-  takenAt:yup
-    .date()
-    .typeError("Invalid Date")
-    .required(),
+  Meal: yup
+    .string()
+    .required("Enter Meal")
+    .matches(
+      /^((Select Meal(?!$)).+|(?!Select Meal).+)$/,
+      "Select From Menu According to Max Number"
+    ),
 });
 
-const InfoAdd = ({ sessionUser }) => {
-  const {
-    data: foodEntries,
-    error,
-    mutate,
-  } = useSWR("/api/entryList", fetcher);
-  const saveFoodEntry = async (new_data) => {
-    const { id, ...dataWithoutIndex } = new_data;
-    try {
-      await fetch("/api/foodEntry", {
-        method: "POST",
-        body: JSON.stringify(dataWithoutIndex),
-      });
-      mutate();
-    } catch (e) {
-      console.log(e);
+
+const InfoAdd = (props) => {
+  // const {
+  //   data: foodEntries,
+  //   error,
+  //   isLoading,
+  //   mutate,
+  // } = useSWR(
+  //   sessionUser ? ["/api/entriesPerEmail", sessionUser.email] : null,
+  //   fetcherForUserInfo
+  // );
+
+  console.log("---------- Info Add ----------");
+
+  // const { mealRows, isLoadingMeal, mutateMeal } = MealsApiCall({sessionEmail:sessionUser.email});
+  // const { data:mealRows, isLoadingMeal,errorMealPerEmail,mutate:mutateMeal } = useSWR( ["/api/mealEntryList", sessionUser.email], fetcherForUserInfo);
+  // console.log(" ************** _+      yyyyyyyyyyyyyyyyyyyyyyy       _____+_+_+++++++++++ Meal Rows:",mealRows);
+  const [inputtedMeal, setInputtedMeal] = useState("");
+  let MealDescription = [
+    { mealName: "Breakfast", currEntry: 0, maxEntry: 5 },
+    { mealName: "Lunch", currEntry: 0, maxEntry: 3 },
+    { mealName: "Supper", currEntry: 0, maxEntry: 2 },
+  ];
+
+  const [snackbar, setSnackbar] = useState(null);
+  const handleCloseSnackbar = () => setSnackbar(null);
+
+  let mutateFoodPerEmail = props.mutateFoodPerEmail;
+  let foodEntries = props.foodEntries;
+  const timeUnix = new Date();
+  const todayUnix = timeUnix.getTime();
+  const yesterdayUnix = timeUnix.getTime() / 1000 - 24 * 3600;
+
+  props.foodEntries?.map((item) => {
+    for (let i = 0; i < 3; i++) {
+      if (
+        item.Meal === MealDescription[i].mealName &&
+        item.takenAt >= yesterdayUnix &&
+        item.takenAt <= todayUnix
+      ) {
+        MealDescription[i].currEntry++;
+      }
     }
+  });
+
+
+  const saveFoodEntry = async (new_data) => {
+    // console.log(" @@@-----#############---------###############--", new_data);
+
+    
+    await mutateFoodPerEmail(
+      async (foodEntries) => {
+        let { id, ...dataWithoutId } = new_data;
+        const updatedTodo = await fetch("/api/foodEntry", {
+          method: "POST",
+          body: JSON.stringify(dataWithoutId),
+        });
+
+        const addedRow = await updatedTodo.json();
+        // console.log("%%%%%%%%%%%    $$$$$$$$$$$$$$     ******* : ", addedRow);
+        return [...foodEntries, addedRow];
+      },
+
+      { revalidate: true }
+    );
+    setSnackbar({
+      children: "Entry successfully saved",
+      severity: "success",
+    });
+    // setInputtedMeal("");
   };
 
-  const onSubmit = (data) => {
-    const { takenAt, ...restData } = data;
-    const d = moment(takenAt,"DD/MM/YYYY hh:mm A");
+  const onSubmit = (newdata) => {
+    const { takenAt, ...restData } = newdata;
+    const { mealName, ...exceptMeal } = restData;
+
+    const timeUnix = new Date(String(takenAt));
+    const UpdatedTime = timeUnix.getTime() / 1000;
+    const dataWithUpdatedTime = { ...restData, takenAt: UpdatedTime };
+    // console.log(
+    //   "^^^^^^^^^ ______________ --------------- &&&&&&&&& :",
+    //   takenAt,
+    //   "____ ",
+    //   dataWithUpdatedTime
+    // );
+    // const d = moment(takenAt).format("MMM d, YYYY h:mma");
+    // console.log("date------------>:",d);
+    let sessionUser = props.sessionUser;
     let new_data = {
       id: "",
       userEmail: sessionUser.email,
-      takenAt: String(d._i),
-      ...restData,
+      // takenAt: d,
+
+      ...dataWithUpdatedTime,
     };
-    mutate([...foodEntries, new_data], false);
-    saveFoodEntry(new_data);
+    // console.log("+++++++++++++++ ++++++++++++++ :", new_data);
+    // mutate([...foodEntries, new_data], false);
+
+    // reset({Meal:"Select Meal"});
+    for (let i = 0; i < 3; i++) {
+      if (new_data.Meal === MealDescription[i].mealName) {
+        if (MealDescription[i].currEntry >= MealDescription[i].maxEntry) {
+          reset({ Meal: "Select Meal" });
+          setSnackbar({ children: "Max Limit Exceed", severity: "error" });
+        } else {
+          saveFoodEntry(new_data);
+        }
+      }
+    }
+
+    // setInputtedMeal("Select Meal");
   };
 
   const {
@@ -77,72 +163,176 @@ const InfoAdd = ({ sessionUser }) => {
     getValues,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm({
     resolver: yupResolver(Entryschema),
   });
+  const dd = new Date();
+  const dm = show_time();
+  // console.log(
+  //   "-=-=-=-=-=-=-=- (((((((((((((((((((((((())))))))))))))))))))))))=--=--------=-=-----",
+  //   dm
+  // );
+  const val = {
+    curr: dm,
+  };
+
 
   return (
-    
-      <Paper
-        elevation={3}
-        sx={{
-          width: 800,
-          height: 400,
-          margin: "auto",
-        }}
-      >
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Stack
-            spacing={2}
-            sx={{
-              alignItems: "center",
-            }}
-          >
-            <TextField
-              id="outlined-error-helper-text"
-              label={errors.foodName?.message}
-              defaultValue="Food"
-              {...register("foodName")}
-              sx={{
-                width: "50%",
-                marginTop: "40px",
-              }}
-            />
+    <Box>
+      <Box sx={{
+        // display:'flex',
+        justifyContent: 'space-evenly',
+        bgcolor:"yellow",
+      }}>
+        <Paper
+          elevation={3}
+          sx={{
+            width: 600,
+            height: 400,
 
-            <TextField
-              id="outlined-error-helper-text"
-              label={errors.calorieValue?.message}
-              defaultValue="20"
-              {...register("calorieValue")}
+          }}
+        >
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Stack
+              spacing={2}
               sx={{
-                width: "50%",
-                marginTop: "20px",
+                alignItems: "center",
               }}
-            />
-            <TextField
-              id="outlined-error-helper-text"
-              label={errors.takenAt?.message}
-              type="datetime-local"
-              {...register("takenAt")}
-              sx={{
-                width: "50%",
-                marginTop: "20px",
-              }}
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-            <Button variant="contained" type="submit">
-              submit
-            </Button>
-          </Stack>
-        </form>
-      </Paper>
-      
-    
+            >
+              <TextField
+                id="outlined-error-helper-text"
+                label={errors.foodName?.message}
+                defaultValue="Food"
+                {...register("foodName")}
+                sx={{
+                  width: "65%",
+                  marginTop: "40px",
+                }}
+              />
+
+              <TextField
+                id="outlined-error-helper-text"
+                label={errors.calorieValue?.message}
+                defaultValue="20"
+                {...register("calorieValue")}
+                sx={{
+                  width: "65%",
+                  marginTop: "20px",
+                }}
+              />
+              <TextField
+                id="outlined-error-helper-text"
+                label={errors.takenAt?.message}
+                defaultValue={val.curr}
+                type="datetime-local"
+                {...register("takenAt")}
+                sx={{
+                  width: "65%",
+                  marginTop: "20px",
+                }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+              <TextField
+                id="outlined-error-helper-text"
+                select
+                defaultValue="Select Meal"
+                label={errors.Meal?.message}
+                SelectProps={{
+                  renderValue: (value) => {
+                    for (let i = 0; i < 3; i++) {
+                      // console.log(
+                      //   "(((((((((((((((((((((((())))))))))))))))))))) : ",
+                      //   value
+                      // );
+                      if (value === "Select Meal") {
+                        return "Select Meal";
+                      }
+                      if (value === MealDescription[i].mealName) {
+                        if (
+                          MealDescription[i].currEntry >=
+                          MealDescription[i].maxEntry
+                        ) {
+                          return "Select Meal";
+                        } else {
+                          return value;
+                        }
+                      }
+                    }
+                  },
+                }}
+                {...register("Meal")}
+                sx={{
+                  width: "65%",
+                  marginTop: "20px",
+                }}
+              >
+                {MealsList.map((option) => {
+                  let d = false;
+                  // const filteredMealEntries = foodEntries.filter((entry) => {
+                  //   if(entry.Meal === valu){
+
+                  //   }
+                  // });
+
+                  for (let i = 0; i < 3; i++) {
+                    if (option.label === MealDescription[i].mealName) {
+                      if (
+                        MealDescription[i].currEntry >=
+                        MealDescription[i].maxEntry
+                      ) {
+                        d = true;
+                      }
+                    }
+                  }
+
+                  return (
+                    <MenuItem
+                      disabled={d}
+                      key={option.value}
+                      value={option.label}
+                    >
+                      {option.label}
+                    </MenuItem>
+                  );
+                })}
+              </TextField>
+
+              <Button variant="contained" type="submit">
+                submit
+              </Button>
+            </Stack>
+          </form>
+        </Paper>
+      </Box>
+      <Box>
+        <Paper>
+          {MealDescription.map((item) => {
+            return (
+              <p>
+                {item.mealName} : {item.currEntry} : {item.maxEntry}
+              </p>
+            );
+          })}
+        </Paper>
+        {/* <Paper>
+          <FoodEntryList foodEntries={foodEntries} />
+        </Paper> */}
+        {!!snackbar && (
+          <Snackbar
+            open
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            onClose={handleCloseSnackbar}
+            autoHideDuration={700}
+          >
+            <Alert {...snackbar} onClose={handleCloseSnackbar} />
+          </Snackbar>
+        )}
+      </Box>
+    </Box>
   );
 };
 
 export default InfoAdd;
-
-

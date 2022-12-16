@@ -18,8 +18,18 @@ model FoodEntry {
   foodName String @db.VarChar(50)
   // calorieValue String @db.VarChar(20)
   calorieValue Int
-  takenAt String
+  takenAt Int 
+  Meal String @db.VarChar(50)
 
 }
 
-
+model MealEntry{
+   id  Int @id @default(autoincrement())
+  // id  String  @id @default(uuid())
+  userEmail  String
+  foodName String @db.VarChar(50)
+  // calorieValue String @db.VarChar(20)
+  calorieValue Int
+  takenAt Int 
+  Meal String @db.VarChar(50)
+}
