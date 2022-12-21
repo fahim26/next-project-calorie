@@ -25,10 +25,10 @@ renderEditedMealMenu.propTypes = {
   value: PropTypes.string.isRequired,
 };
 
-const renderMealMenuForEdit = (params) => {
-  // console.log(" __________________ ---   renderRatingEditInputCell --- __________________ : ", params );
-  return <EditMealMenu {...params} />;
-};
+// const renderMealMenuForEdit = (params,MealDescription) => {
+//   // console.log(" __________________ ---   renderRatingEditInputCell --- __________________ : ", params );
+//   return <EditMealMenu params = {params} MealDescription={MealDescription} />;
+// };
 
 
 
@@ -38,10 +38,12 @@ const ColumnMeal = (
   mutateEntry,
   mutateAvg,
   setAddedRows,
-  rows,
-  addedRows
+  foodRows,
+  addedRows,
+  MealDescription,
 ) => {
-
+  // const MealDescription = MealDescription;
+  
   const handleSaveClick = (id) => () => {
     console.log("################################ USER COLUMN ############ ");
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
@@ -59,13 +61,13 @@ const ColumnMeal = (
 
   const handleDeleteClick = (id) => async () => {
     await mutateEntry(
-      async (rows) => {
+      async (foodRows) => {
         await fetch("/api/mealEntry", {
           method: "PUT",
           body: JSON.stringify(id),
         });
 
-        const filteredRows = rows.filter((row) => row.id !== id);
+        const filteredRows = foodRows.filter((row) => row.id !== id);
         // console.log("filteredRows : ", filteredRows);
         return filteredRows;
       },
@@ -79,9 +81,9 @@ const ColumnMeal = (
       [id]: { mode: GridRowModes.View, ignoreModifications: true },
     });
     setAddedRows();
-    const editedRow = rows.find((row) => row.id === id);
+    const editedRow = foodRows.find((row) => row.id === id);
     if (editedRow?.isNew) {
-      const uData = rows.filter((row) => row.id !== id);
+      const uData = foodRows.filter((row) => row.id !== id);
       mutate([uData], false);
     }
   };
@@ -135,9 +137,11 @@ const ColumnMeal = (
         return { ...params.props, error: false };
       },
       renderCell: renderEditedMealMenu,
-      renderEditCell: renderMealMenuForEdit,
-      
-     
+      renderEditCell: (params) => {
+        console.log("****************************************** 7777777777777777 ********************************************** ", MealDescription);
+        return <EditMealMenu params = {params} MealDescription={MealDescription} />;
+      }
+       
     },
     {
       field: "actions",

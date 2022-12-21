@@ -16,7 +16,7 @@ import { EditMealMenu } from "./MealMenu";
 
 function renderEditedMealMenu(params) {
 
-  console.log("#################   Params    ############## :",params.value);
+  // console.log("#################   Params    ############## :",params.value);
   return <div>{params.value}</div>;
 }
 
@@ -59,13 +59,13 @@ const Column = (
 
   const handleDeleteClick = (id) => async () => {
     await mutateEntry(
-      async (rows) => {
+      async (foodRows) => {
         await fetch("/api/foodEntry", {
           method: "PUT",
           body: JSON.stringify(id),
         });
 
-        const filteredRows = rows.filter((row) => row.id !== id);
+        const filteredRows = foodRows.filter((row) => row.id !== id);
         console.log("filteredRows : ", filteredRows);
         return filteredRows;
       },
@@ -134,7 +134,7 @@ const Column = (
       width: 150,
       preProcessEditCellProps: (params) => {
         const isValidCalorie = schemaObject.calSchema.test(params.props.value);
-        console.log("food name : ", params.props.value, " -- ", isValidCalorie);
+        console.log("food name : ", params.props, " -- ", isValidCalorie);
         return { ...params.props, error: !isValidCalorie };
       },
     },
@@ -175,7 +175,7 @@ const Column = (
         const id = params.id;
         // console.log("_________ ---------------------------------------  id >>> ",params,id);
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
-        console.log("-.-.-.-.-..-.-.-..-.-.-.-.-.-. : ", isInEditMode);
+        // console.log("-.-.-.-.-..-.-.-..-.-.-.-.-.-. : ", isInEditMode);
         if (isInEditMode) {
           return [
             <GridActionsCellItem

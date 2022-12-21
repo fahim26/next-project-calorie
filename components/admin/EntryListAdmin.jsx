@@ -31,23 +31,27 @@ EditToolbar.propTypes = {
   setAddedRows: PropTypes.func.isRequired,
   addedRows: PropTypes.object,
   rowModesModel: PropTypes.object,
-  rows: PropTypes.array,
+  foodRows: PropTypes.array,
   apiType: PropTypes.string,
   mutateEntry: PropTypes.func.isRequired,
   mutateAvg: PropTypes.func.isRequired,
   sessionEmail: PropTypes.string,
+  MealDescription: PropTypes.array,
 };
 
 const EntryListAdmin = (props) => {
-  console.log("---------- Entry List Admin ----------");
   // const { mutate:mutateAvg } = useSWRConfig()
   // const { data: rows, error, mutate } = useSWR("/api/entryList", fetcher);
 
-  // const { foodRows, isLoading, mutate } = Entries();
+  // const { foodRows, isLoading, mutateEntry } = Entries();
   // console.log(" ************** Food Rows:",foodRows);
 
   // const { avgRows, isLoadingAvg, mutateAvg } = AVGEntries(foodRows);
   // console.log(" ************** AVERAGE ENTRIES:",avgRows);
+
+  // let foodRows = foodRowsWithCount;
+  // let week1count = 5;
+  // let week2count = 3;
 
   const foodRows = props.foodRows;
   // console.log(" ************** Food Rows:", foodRows);
@@ -55,16 +59,21 @@ const EntryListAdmin = (props) => {
   const mutateEntry = props.mutateEntry;
   const mutateAvg = props.mutateAvg;
   const apiType = props.apiType;
+  let MealDescription = props.MealDescription;
   const sessionEmail = String(props.sessionUser?.email);
-
+  console.log("---------- Entry List Admin ----------:", MealDescription);
   const [addedRows, setAddedRows] = useState();
   const [rowModesModel, setRowModesModel] = useState({});
   const [snackbar, setSnackbar] = useState(null);
   const handleCloseSnackbar = () => setSnackbar(null);
 
+  console.log("---------- Entry List Admin ----------:", foodRows,"0000",rowModesModel);
   let rows = foodRows;
   let week1count = props.week1count;
   let week2count = props.week2count;
+  
+
+  
   //   if(apiType === "admin"){
   //   if (foodRows) {
   //     rows = foodRows[0];
@@ -93,6 +102,25 @@ const EntryListAdmin = (props) => {
   const newFoods = foodRows?.map((f) => convertDate(f));
   // console.log(addedRows);
 
+  let rowsWithAddedDemo;
+  if (typeof addedRows === "undefined") {
+    rowsWithAddedDemo = newFoods;
+  } else {
+    // const {id,...restRowData} = addedRows;
+    // if(id) {
+    // if(rowModesModel?.mode === "edit"){
+    // if (rowModesModel[id]?.mode !== GridRowModes.Edit)
+    // console.log(
+    //   "#$$$$$$$$$#$#$^%$^^^$$$$$$$$$$$$$$$$$$$$$$$$:",
+    //   addedRows.id,
+    //   props.foodRows.slice(-1).id
+    // );
+    if (props.foodRows?.slice(-1).id !== addedRows.id)
+      rowsWithAddedDemo = [...newFoods, addedRows];
+    // }
+    // }
+  }
+
   const handleRowEditStart = (params, event) => {
     event.defaultMuiPrevented = true;
   };
@@ -106,11 +134,13 @@ const EntryListAdmin = (props) => {
   }, []);
 
   const processRowUpdate = React.useCallback(async (newRow) => {
-    console.log("______________________________________ Start __________________________ ",newRow);
+    console.log(
+      "______________________________________ Start __________________________ ",
+      newRow
+    );
     const timeUnix = new Date(String(newRow.takenAt));
     const UpdatedTime = timeUnix.getTime() / 1000;
     // const dataWithUpdatedTime = {...restData,takenAt:UpdatedTime};
-
 
     const updatedRow = {
       ...newRow,
@@ -120,114 +150,102 @@ const EntryListAdmin = (props) => {
     };
     const { isNew, ...resp } = updatedRow;
     const { id, ...rowDB } = resp;
+    let optionDetail;
+    if (props.apiType === "admin") {
+      optionDetail = {
+        optimisticData: (foodRows) => [...foodRows, resp],
+        rollbackOnError: true,
+      };
+    } else if (props.apiType === "user") {
+      optionDetail = {revalidate:false};
+    }
+    
 
-    // if (newRow.isNew) {
-    //   // console.log("----------  New Row ---------- : ", newRow);
-    //   let apiName = null;
-    //   if (props.apiType === "admin") {
-    //     apiName = "/api/foodEntry";
-    //   } else if (props.apiType === "user") {
-    //     apiName = "/api/mealEntry";
-    //   }
-    //   if (props.apiType === "admin") {
-    //     await mutateEntry(
-    //       async (foodRows) => {
-    //         const updatedTodo = await fetch("/api/foodEntry", {
-    //           method: "POST",
-    //           body: JSON.stringify(rowDB),
-    //         });
-    //         const addedRow = await updatedTodo.json();
-    //         // const filteredRows = foodRows.filter(todo => todo.id !== addedRow)
-    //         return [...foodRows, addedRow];
-    //       },
+    if (newRow.isNew) {
+      // console.log("----------  New Row ---------- : ", newRow);
 
-    //       {
-    //         optimisticData: (foodRows) => [...foodRows, resp],
-    //         rollbackOnError: true,
-    //       }
-    //     );
-    //     setAddedRows();
+      if (props.apiType === "admin") {
+        await mutateEntry(
+          async (foodRows) => {
+            const updatedTodo = await fetch("/api/foodEntry", {
+              method: "POST",
+              body: JSON.stringify(rowDB),
+            });
+            const addedRow = await updatedTodo.json();
+            // const filteredRows = foodRows.filter(todo => todo.id !== addedRow)
+            return [...foodRows, addedRow];
+          },
 
-    //     await mutateAvg(mutateAvgCalorie, { revalidate: true });
-    //   } else if (apiType === "user") {
-    //     await mutateEntry(
-    //       async (foodRows) => {
-    //         const updatedTodo = await fetch("/api/mealEntry", {
-    //           method: "POST",
-    //           body: JSON.stringify(rowDB),
-    //         });
-    //         const addedRow = await updatedTodo.json();
-    //         setAddedRows();
-    //         // const filteredRows = foodRows.filter(todo => todo.id !== addedRow)
-    //         return [...foodRows, addedRow];
-    //       },
-    //       { revalidate: false }
-    //     );
-    //   }
-    //   // console.log("00008988889:", avgRows);
+          {
+            optimisticData: (foodRows) => [...foodRows, resp],
+            rollbackOnError: true,
+          }
+        );
+        setAddedRows();
 
-    //   setSnackbar({
-    //     children: "User successfully saved",
-    //     severity: "success",
-    //   });
-    //   setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
-    //   return resp;
-    // } else {
-    //   const options = { optimisticData: resp, rollbackOnError: true };
+        await mutateAvg(mutateAvgCalorie, { revalidate: true });
+      } else if (apiType === "user") {
+        await mutateEntry(
+          async (foodRows) => {
+            const updatedTodo = await fetch("/api/mealEntry", {
+              method: "POST",
+              body: JSON.stringify(rowDB),
+            });
+            const addedRow = await updatedTodo.json();
+            setAddedRows();
+            // const filteredRows = foodRows.filter(todo => todo.id !== addedRow)
+            return [...foodRows, addedRow];
+          },
+          { revalidate: false }
+        );
+      }
+      // console.log("00008988889:", avgRows);
 
-    //   // const updatedOptimisticFoodRows = foodRows.map((row) =>
-    //   //   row.id === id ? resp : row
-    //   // );
+      setSnackbar({
+        children: "User successfully saved",
+        severity: "success",
+      });
+      // setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+      return resp;
+    } else {
+      const options = { optimisticData: resp, rollbackOnError: true };
 
+      // const updatedOptimisticFoodRows = foodRows.map((row) =>
+      //   row.id === id ? resp : row
+      // );
 
-    //   // console.log(
-    //   //   "--------%%%%%%%%%%%%%%%%----------- >>>>>>>>>>>> :",
-    //   //   updatedOptimisticFoodRows
-    //   // );
-
-    //   const dataWithAPItype = { ...resp, apiType: props.apiType };
-    //   mutateEntry(
-    //     async (foodRows) => {
-    //       const updatedTodo = await fetch("/api/updateList", {
-    //         method: "PUT",
-    //         body: JSON.stringify(dataWithAPItype),
-    //       });
-    //       const updateRow = await updatedTodo.json();
-
-    //       const filteredRows = foodRows.filter((row) => row.id !== id);
-
-    //       return [...filteredRows, updateRow];
-    //     },
-    //     {revalidate:false}
-    //   );
-
-    //   // if (apiType === "admin") {
-    //   //   await mutateAvg(mutateAvgCalorie, { revalidate: true });
-    //   // }
-    //   console.log("______________________________________ END __________________________");
-    //   // setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
-    //   return resp;
-    // }
-
-          const dataWithAPItype = { ...resp, apiType: props.apiType };
-      mutateEntry(
+      // console.log(
+      //   "--------%%%%%%%%%%%%%%%%----------- >>>>>>>>>>>> :",
+      //   updatedOptimisticFoodRows
+      // );
+      
+      const dataWithAPItype = { ...resp, apiType: props.apiType };
+      await mutateEntry(
         async (foodRows) => {
           const updatedTodo = await fetch("/api/updateList", {
             method: "PUT",
             body: JSON.stringify(dataWithAPItype),
           });
           const updateRow = await updatedTodo.json();
-
+  
           const filteredRows = foodRows.filter((row) => row.id !== id);
-
+  
           return [...filteredRows, updateRow];
         },
-        {revalidate:true}
+        optionDetail
       );
-    console.log("______________________________________ END __________________________");
-    return resp;
-    
-  }, []);
+      console.log(
+        "______________________________________ END __________________________"
+      );
+
+      if (apiType === "admin") {
+        await mutateAvg(mutateAvgCalorie, { revalidate: true });
+      }
+      console.log("______________________________________ END __________________________");
+      // setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+      return resp;
+    }
+  });
 
   let columns = [];
   if (apiType === "admin") {
@@ -248,28 +266,12 @@ const EntryListAdmin = (props) => {
       mutateAvg,
       setAddedRows,
       foodRows,
-      addedRows
+      addedRows,
+      MealDescription,
     );
   }
 
-  let rowsWithAddedDemo;
-  if (typeof addedRows === "undefined") {
-    rowsWithAddedDemo = newFoods;
-  } else {
-    // const {id,...restRowData} = addedRows;
-    // if(id) {
-    // if(rowModesModel?.mode === "edit"){
-    // if (rowModesModel[id]?.mode !== GridRowModes.Edit)
-    // console.log(
-    //   "#$$$$$$$$$#$#$^%$^^^$$$$$$$$$$$$$$$$$$$$$$$$:",
-    //   addedRows.id,
-    //   props.foodRows.slice(-1).id
-    // );
-    if (props.foodRows?.slice(-1).id !== addedRows.id)
-      rowsWithAddedDemo = [...newFoods, addedRows];
-    // }
-    // }
-  }
+
 
   // console.log(
   //   "--------%%%%%%%%%%%%%%%%----------- >>>>>>>>>>>> :",
@@ -279,8 +281,9 @@ const EntryListAdmin = (props) => {
   //   "---",
   //   rowModesModel
   // );
-const width = (props.apiType === "admin" ? 1300 : 700);
-const height = (props.apiType === "admin" ? 600 : 400);
+
+  const width = props.apiType === "admin" ? 1300 : 700;
+  const height = props.apiType === "admin" ? 600 : 400;
   return (
     <Box
       sx={{
@@ -296,8 +299,8 @@ const height = (props.apiType === "admin" ? 600 : 400);
       <Paper
         elevation={10}
         sx={{
-          width: {width},
-          height: {height},
+          width: { width },
+          height: { height },
           marginBottom: "10px",
           padding: "20px",
           alignItems: "center",

@@ -1,7 +1,14 @@
 import useSWR, { useSWRConfig } from "swr";
 import axios from "axios";
 import {
-  Button, TextField, Stack,  Paper, MenuItem, Box, Snackbar, Alert,
+  Button,
+  TextField,
+  Stack,
+  Paper,
+  MenuItem,
+  Box,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -11,7 +18,7 @@ import * as yup from "yup";
 import { show_time } from "../Func Folder/dateTimeModification";
 import { MealsList } from "../Func Folder/MealsList";
 import FoodEntryList from "./FoodEntryList";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MealDataGridForUser from "./MealDataGridForUser";
 import MealsApiCall from "./admin/MealsApiCall";
 import EntryListAdmin from "./admin/EntryListAdmin";
@@ -45,7 +52,6 @@ export const Entryschema = yup.object().shape({
     ),
 });
 
-
 const InfoAdd = (props) => {
   // const {
   //   data: foodEntries,
@@ -62,43 +68,109 @@ const InfoAdd = (props) => {
   // const { mealRows, isLoadingMeal, mutateMeal } = MealsApiCall({sessionEmail:sessionUser.email});
   // const { data:mealRows, isLoadingMeal,errorMealPerEmail,mutate:mutateMeal } = useSWR( ["/api/mealEntryList", sessionUser.email], fetcherForUserInfo);
   // console.log(" ************** _+      yyyyyyyyyyyyyyyyyyyyyyy       _____+_+_+++++++++++ Meal Rows:",mealRows);
-  const [inputtedMeal, setInputtedMeal] = useState("");
-  let MealDescription = [
-    { mealName: "Breakfast", currEntry: 0, maxEntry: 5 },
-    { mealName: "Lunch", currEntry: 0, maxEntry: 3 },
-    { mealName: "Supper", currEntry: 0, maxEntry: 2 },
-  ];
+  const [inputtedMeal, setInputtedMeal] = useState(props.MealDescription);
+  // let MealDescription = [
+  //   { mealName: "Breakfast", currEntry: 0, maxEntry: 5 },
+  //   { mealName: "Lunch", currEntry: 0, maxEntry: 3 },
+  //   { mealName: "Supper", currEntry: 0, maxEntry: 2 },
+  // ];
+  // const [foodEntriesPerEmail,setFoodEntriesPerEmail] = useState(props.foodEntries);
+
 
   const [snackbar, setSnackbar] = useState(null);
   const handleCloseSnackbar = () => setSnackbar(null);
 
-  let mutateFoodPerEmail = props.mutateFoodPerEmail;
+  // let mutateFoodPerEmail = props.mutateFoodPerEmail;
   let foodEntries = props.foodEntries;
-  const timeUnix = new Date();
-  const todayUnix = timeUnix.getTime();
-  const yesterdayUnix = timeUnix.getTime() / 1000 - 24 * 3600;
+  let MealDescription = props.MealDescription;
 
-  props.foodEntries?.map((item) => {
-    for (let i = 0; i < 3; i++) {
-      if (
-        item.Meal === MealDescription[i].mealName &&
-        item.takenAt >= yesterdayUnix &&
-        item.takenAt <= todayUnix
-      ) {
-        MealDescription[i].currEntry++;
-      }
-    }
-  });
+  console.log("//////// ++++++++++++++ ///////////// 0000000000000000000 ================= :",MealDescription);
+  // const timeUnix = new Date();
+  // const todayUnix = timeUnix.getTime();
+  // const yesterdayUnix = timeUnix.getTime() / 1000 - 24 * 3600;
 
+  // useEffect(() => {
+    // foodEntries?.map((item) => {
+    //   for (let i = 0; i < 3; i++) {
+    //     if (
+    //       item.Meal === MealDescription[i].mealName &&
+    //       item.takenAt >= yesterdayUnix &&
+    //       item.takenAt <= todayUnix
+    //     ) {
+    //       // let MealElement = MealDescription[i];
+    //       // let {currEntry, ...restMealElement} = MealElement;
+    //       // MealDescription[i].currEntry++;
+    //       setMealDescription((prev) => prev[i].currEntry+1);
+    //     }
+    //   }
+    // });
+
+    // setMealDescription(
+    //   foodEntries?.map((item) => {
+    //     item.Meal === item.mealName &&
+    //     item.takenAt >= yesterdayUnix &&
+    //     item.takenAt <= todayUnix
+    //       ? { ...item, currEntry: item.currEntry + 1 }
+    //       : { ...item };
+    //   })
+    // );
+    // setMealDescription(
+    //   MealDescription?.map((mealItem) => {
+    //     return props?.foodEntries.map((item) => {
+    //       mealItem.Meal === item.mealName &&
+    //       item.takenAt >= yesterdayUnix &&
+    //       item.takenAt <= todayUnix
+    //         ? { ...mealItem, currEntry: mealItem.currEntry + 1 }
+    //         : { ...mealItem };
+    //     });
+    //   })
+    // );
+
+    // let tempList = [];
+    // let brkfst = props?.foodEntries.filter((item) => item.Meal==="Breakfast" && item.takenAt >= yesterdayUnix &&
+    // item.takenAt <= todayUnix).length;  
+    // let lunch = props?.foodEntries.filter((item) => item.Meal==="Lunch" && item.takenAt >= yesterdayUnix &&
+    // item.takenAt <= todayUnix).length;  
+    // let supper = props?.foodEntries.filter((item) => item.Meal==="Supper" && item.takenAt >= yesterdayUnix &&
+    // item.takenAt <= todayUnix).length;  
+    
+    // tempList = MealDescription?.filter((mealItem) => {
+    //   let {mealName, ...rest} = mealItem;
+    //   let {currEntry, ...restMealDescription} = mealItem;
+    //   if(mealName === "Breakfast")
+    //   return {...restMealDescription,currEntry: brkfst};
+
+    //   if(mealName === "Lunch")
+    //   return {...restMealDescription,currEntry: lunch};
+      
+    //   if(mealName === "Supper")
+    //   return {...restMealDescription,currEntry: supper};
+    // })
+
+    // setMealDescription(tempList);
+
+    // console.log("//////// ++++++++++++++ ///////////// 0000000000000000000 ================= :",tempList ,brkfst,lunch,supper);      
+  // });
+  
+  // props.foodEntries?.map((item) => {
+  //   for (let i = 0; i < 3; i++) {
+  //     if (
+  //       item.Meal === MealDescription[i].mealName &&
+  //       item.takenAt >= yesterdayUnix &&
+  //       item.takenAt <= todayUnix
+  //     ) {
+  //       MealDescription[i].currEntry++;
+  //     }
+  //   }
+  // });
 
   const saveFoodEntry = async (new_data) => {
     // console.log(" @@@-----#############---------###############--", new_data);
 
-    
-    await mutateFoodPerEmail(
+    await props.mutateFoodPerEmail(
       async (foodEntries) => {
         let { id, ...dataWithoutId } = new_data;
-        const updatedTodo = await fetch("/api/foodEntry", {
+        const updatedTodo = await fetch("/api/userFoodEntry", {
           method: "POST",
           body: JSON.stringify(dataWithoutId),
         });
@@ -110,6 +182,13 @@ const InfoAdd = (props) => {
 
       { revalidate: true }
     );
+
+    
+
+    // setMealDescription(tempList);
+
+
+
     setSnackbar({
       children: "Entry successfully saved",
       severity: "success",
@@ -177,20 +256,20 @@ const InfoAdd = (props) => {
     curr: dm,
   };
 
-
   return (
     <Box>
-      <Box sx={{
-        // display:'flex',
-        justifyContent: 'space-evenly',
-        bgcolor:"yellow",
-      }}>
+      <Box
+        sx={{
+          // display:'flex',
+          justifyContent: "space-evenly",
+          bgcolor: "yellow",
+        }}
+      >
         <Paper
           elevation={3}
           sx={{
             width: 600,
             height: 400,
-
           }}
         >
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -269,7 +348,30 @@ const InfoAdd = (props) => {
                   marginTop: "20px",
                 }}
               >
-                {MealsList.map((option) => {
+                {
+                  
+                  MealDescription?.map((item) => {
+                    let flag = false;
+                    console.log("//////// ++++++++++++++ ///////////// ================= :" ,item);
+                    if (
+                      item.currEntry >= item.maxEntry
+                    ) {
+                      flag = true;
+                    } else {
+                      flag =  false;
+                    }
+                    return (
+                      <MenuItem
+                        disabled={flag}
+                        key={item.mealID}
+                        value={item.mealName}
+                      >
+                        {item.mealName}
+                      </MenuItem>
+                    );
+                  })
+                }
+                {/* {MealsList.map((option) => {
                   let d = false;
                   // const filteredMealEntries = foodEntries.filter((entry) => {
                   //   if(entry.Meal === valu){
@@ -277,16 +379,27 @@ const InfoAdd = (props) => {
                   //   }
                   // });
 
-                  for (let i = 0; i < 3; i++) {
-                    if (option.label === MealDescription[i].mealName) {
-                      if (
-                        MealDescription[i].currEntry >=
-                        MealDescription[i].maxEntry
-                      ) {
-                        d = true;
-                      }
+                  // for (let i = 0; i < 3; i++) {
+                  //   if (option.label === MealDescription[i].mealName) {
+                  //     if (
+                  //       MealDescription[i].currEntry >=
+                  //       MealDescription[i].maxEntry
+                  //     ) {
+                  //       d = true;
+                  //     }
+                  //   }
+                  // }
+
+                  d = MealDescription?.map((item) => {
+                    if (
+                      option.label === item.mealName &&
+                      item.currEntry >= item.maxEntry
+                    ) {
+                      return true;
+                    } else {
+                      return false;
                     }
-                  }
+                  });
 
                   return (
                     <MenuItem
@@ -297,7 +410,7 @@ const InfoAdd = (props) => {
                       {option.label}
                     </MenuItem>
                   );
-                })}
+                })} */}
               </TextField>
 
               <Button variant="contained" type="submit">
@@ -308,7 +421,7 @@ const InfoAdd = (props) => {
         </Paper>
       </Box>
       <Box>
-        <Paper>
+        {/* <Paper>
           {MealDescription.map((item) => {
             return (
               <p>
@@ -316,7 +429,7 @@ const InfoAdd = (props) => {
               </p>
             );
           })}
-        </Paper>
+        </Paper> */}
         {/* <Paper>
           <FoodEntryList foodEntries={foodEntries} />
         </Paper> */}

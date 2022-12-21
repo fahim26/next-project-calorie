@@ -10,7 +10,7 @@ const fetcher = (url) => axios.get(url).then((response) => response.data);
 
 export default function Home() {
   const { data: session, status } = useSession();
-
+  console.log("=============== SESSION : =============:",session);
   if (status === "loading") {
     return <p>Loading...</p>;
   }
