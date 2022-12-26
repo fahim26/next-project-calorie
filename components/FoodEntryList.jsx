@@ -20,15 +20,15 @@ const FoodEntryList = (props) => {
   const newFoods = foods?.map((f)=> convertDate(f));
   console.log("new Fodds --------- : ",newFoods);
   const columns = [
-    { field: "id", headerName: "ID", width: 250 },
-    { field: "foodName", headerName: "Food Name", width: 250 },
+    { field: "id", headerName: "ID", width: 75 },
+    { field: "foodName", headerName: "Food Name", width: 150 },
     {
       field: "calorieValue",
       headerName: "Calorie Value",
       width: 150,
     },
-    { field: "takenAt", headerName: "Date Time", width: 400 },
-    { field: "Meal", headerName: "Meal", width: 250 },
+    { field: "takenAt", headerName: "Date Time", width: 200 },
+    { field: "Meal", headerName: "Meal", width: 100 },
   ];
 
   function convertDate(food){
@@ -54,7 +54,7 @@ const FoodEntryList = (props) => {
     return newRowObject;
   }
   return (
-    <Box sx={{ height: 600, width: "80%" }}>
+    <Box sx={{ height: 600 }}>
       <DataGrid
         rows={foods ? newFoods : []}
         columns={columns}

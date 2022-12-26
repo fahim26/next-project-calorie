@@ -1,5 +1,11 @@
 import React from "react";
-import { GridRowModes, DataGrid,useGridApiContext, GridActionsCellItem, gridColumnLookupSelector } from "@mui/x-data-grid";
+import {
+  GridRowModes,
+  DataGrid,
+  useGridApiContext,
+  GridActionsCellItem,
+  gridColumnLookupSelector,
+} from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import SaveIcon from "@mui/icons-material/Save";
@@ -12,16 +18,12 @@ import {
 } from "../Func Folder/AdminCRUD";
 import { EditMealMenu } from "./admin/MealMenu";
 
-
-
 function renderEditedMealMenu(params) {
-
   // console.log("#################   Params    ############## :",params.value);
   return <div>{params.value}</div>;
 }
 
 renderEditedMealMenu.propTypes = {
-
   value: PropTypes.string.isRequired,
 };
 
@@ -29,8 +31,6 @@ renderEditedMealMenu.propTypes = {
 //   // console.log(" __________________ ---   renderRatingEditInputCell --- __________________ : ", params );
 //   return <EditMealMenu params = {params} MealDescription={MealDescription} />;
 // };
-
-
 
 const ColumnMeal = (
   rowModesModel,
@@ -40,14 +40,13 @@ const ColumnMeal = (
   setAddedRows,
   foodRows,
   addedRows,
-  MealDescription,
+  MealDescription
 ) => {
   // const MealDescription = MealDescription;
-  
-  const handleSaveClick = (id) => () => {
-    console.log("################################ USER COLUMN ############ ");
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
 
+  const handleSaveClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+    console.log("################################ USER COLUMN ############ ");
   };
   const handleEditClick = (id) => () => {
     console.log("################################ USER EDIT ############ ");
@@ -87,7 +86,6 @@ const ColumnMeal = (
       mutate([uData], false);
     }
   };
-
 
   const columns = [
     {
@@ -133,15 +131,26 @@ const ColumnMeal = (
       headerClassName: "super-app-theme--header",
       headerAlign: "center",
       preProcessEditCellProps: (params) => {
-        console.log("Pre preocess cell update --~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!----: ",params);
-        return { ...params.props, error: false };
+        const isValidMeal = schemaObject.mealSchema.test(params.props.value);
+        console.log(
+          ">>>>>>>>>  ****************************************** 7777777777777777 ********************************************** ",
+          isValidMeal,
+          "00000",
+          params.props.value
+        );
+        // console.log("calorie : ", params.props.value);
+        return { ...params.props, error: !isValidMeal };
+
+        // console.log("Pre preocess cell update --~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!----: ",params);
+        // return { ...params.props, error: false };
       },
       renderCell: renderEditedMealMenu,
       renderEditCell: (params) => {
-        console.log("****************************************** 7777777777777777 ********************************************** ", MealDescription);
-        return <EditMealMenu params = {params} MealDescription={MealDescription} />;
-      }
-       
+        // console.log("****************************************** 7777777777777777 ********************************************** ", MealDescription);
+        return (
+          <EditMealMenu params={params} MealDescription={MealDescription} />
+        );
+      },
     },
     {
       field: "actions",
@@ -152,11 +161,11 @@ const ColumnMeal = (
       headerAlign: "center",
       cellClassName: "actions",
       getActions: (params) => {
-        const id = params.id;
-        // console.log("_________ ---------------------------------------  id >>> ",params,id);
+        const id = params?.id;
+        console.log("<<<<<<<< _________ ---------------------------------------  id >>> ",params,id);
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
         // console.log("-.-.-.-.-..-.-.-..-.-.-.-.-.-. : ", isInEditMode);
-        if (isInEditMode) {
+        if (isInEditMode && parseInt(Object.keys(rowModesModel)[0]) === id) {
           return [
             <GridActionsCellItem
               icon={<SaveIcon />}
@@ -171,30 +180,35 @@ const ColumnMeal = (
               color="inherit"
             />,
           ];
-        }
-
-        if (
+        } else if (
           !isNaN(parseInt(Object.keys(rowModesModel)[0])) &&
           parseInt(Object.keys(rowModesModel)[0]) !== id
         ) {
           return [];
+        } else {
+          return [
+            <GridActionsCellItem
+              icon={<EditIcon />}
+              label="Edit"
+              className="textPrimary"
+              onClick={handleEditClick(id)}
+              color="inherit"
+            />,
+            <GridActionsCellItem
+              icon={<DeleteIcon />}
+              label="Delete"
+              onClick={handleDeleteClick(id)}
+              color="inherit"
+            />,
+          ];
         }
 
-        return [
-          <GridActionsCellItem
-            icon={<EditIcon />}
-            label="Edit"
-            className="textPrimary"
-            onClick={handleEditClick(id)}
-            color="inherit"
-          />,
-          <GridActionsCellItem
-            icon={<DeleteIcon />}
-            label="Delete"
-            onClick={handleDeleteClick(id)}
-            color="inherit"
-          />,
-        ];
+        // if (
+        //   !isNaN(parseInt(Object.keys(rowModesModel)[0])) &&
+        //   parseInt(Object.keys(rowModesModel)[0]) !== id
+        // ) {
+        //   return [];
+        // }
       },
     },
   ];

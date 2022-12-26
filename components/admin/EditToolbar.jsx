@@ -84,7 +84,7 @@ export default function EditToolbar(props) {
       foodName: "Food",
       calorieValue: 10,
       takenAt: new Date(),
-      Meal: "",
+      Meal: "Select Meal",
       isNew: true,
     };
 

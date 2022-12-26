@@ -39,7 +39,7 @@ const Column = (
   mutateAvg,
   setAddedRows,
   foodRows,
-  addedRows
+  addedRows,
 ) => {
 
   const handleSaveClick = (id) => () => {
@@ -79,11 +79,12 @@ const Column = (
       [id]: { mode: GridRowModes.View, ignoreModifications: true },
     });
     setAddedRows();
-    const editedRow = rows.find((row) => row.id === id);
+    const editedRow = foodRows?.find((row) => row.id === id);
     if (editedRow?.isNew) {
-      const uData = rows.filter((row) => row.id !== id);
+      const uData = foodRows?.filter((row) => row.id !== id);
       mutate([uData], false);
     }
+    
   };
 
 
@@ -159,7 +160,10 @@ const Column = (
         return { ...params.props, error: false };
       },
       renderCell: renderEditedMealMenu,
-      renderEditCell: renderMealMenuForEdit,
+      renderEditCell: (params) => {
+        // console.log("****************************************** 7777777777777777 ********************************************** ", MealDescription);
+        return <EditMealMenu params = {params}/>;
+      }
       
      
     },

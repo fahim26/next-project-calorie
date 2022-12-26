@@ -27,6 +27,7 @@
     "datejs": "^1.0.0-rc3",
     "dayjs": "^1.11.6",
     "formik": "^2.2.9",
+    "framer-motion": "^8.0.1",
     "moment": "^2.29.4",
     "moment-jalaali": "^0.9.6",
     "next": "12.3.1",

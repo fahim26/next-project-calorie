@@ -1,18 +1,20 @@
-import { Paper } from '@mui/material';
+import { Box, Paper, Stack, Typography } from '@mui/material';
 import React from 'react'
 
 const MealEntryCount = (props) => {
   let MealDescription = props.MealDescription;
     return (
-    <Paper>
+    <Stack>
           {MealDescription.map((item) => {
             return (
-              <p>
-                {item.mealName} : {item.currEntry} : {item.maxEntry}
-              </p>
+
+              <Typography variant="h7" gutterBottom>
+              {/* Meal Name: {item.mealName} | Number of Current Entry:  {item.currEntry} | Number of Max Entry: {item.maxEntry} */}
+              {item.mealName} has currently {item.currEntry} entries and can have maximum of {item.maxEntry} entries.
+              </Typography>
             );
           })}
-    </Paper>
+    </Stack>
   )
 }
 

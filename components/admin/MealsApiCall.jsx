@@ -37,7 +37,7 @@ export const MealsApiCall =  (props) => {
 
     return {
       mealRows: mealEntriesPerEmail,
-      isLoadingMeal: !error && !mealEntriesPerEmail,
+      isLoadingMeal: !error && !mealEntriesPerEmail ,
       isErrorMeal: error,
       mutateMeal: mutate,
       breakfastCount: brkfst,

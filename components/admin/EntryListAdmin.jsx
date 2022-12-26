@@ -134,6 +134,7 @@ const EntryListAdmin = (props) => {
   }, []);
 
   const processRowUpdate = React.useCallback(async (newRow) => {
+    
     console.log(
       "______________________________________ Start __________________________ ",
       newRow
@@ -150,6 +151,7 @@ const EntryListAdmin = (props) => {
     };
     const { isNew, ...resp } = updatedRow;
     const { id, ...rowDB } = resp;
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
     let optionDetail;
     if (props.apiType === "admin") {
       optionDetail = {
@@ -160,8 +162,10 @@ const EntryListAdmin = (props) => {
       optionDetail = {revalidate:false};
     }
     
-
-    if (newRow.isNew) {
+    if(newRow.Meal === "Select Meal"){
+      setSnackbar({ children: "Meal Field cannot be empty", severity:"warning" });
+    }else{
+    if (newRow.isNew ) {
       // console.log("----------  New Row ---------- : ", newRow);
 
       if (props.apiType === "admin") {
@@ -206,6 +210,7 @@ const EntryListAdmin = (props) => {
         severity: "success",
       });
       // setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+      
       return resp;
     } else {
       const options = { optimisticData: resp, rollbackOnError: true };
@@ -245,6 +250,7 @@ const EntryListAdmin = (props) => {
       // setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
       return resp;
     }
+  }
   });
 
   let columns = [];
@@ -256,7 +262,8 @@ const EntryListAdmin = (props) => {
       mutateAvg,
       setAddedRows,
       foodRows,
-      addedRows
+      addedRows,
+
     );
   } else if (apiType === "user") {
     columns = ColumnMeal(

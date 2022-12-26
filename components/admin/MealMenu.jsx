@@ -30,7 +30,7 @@ import { MealsList } from "../../Func Folder/MealsList";
 export function EditMealMenu(props) {
   const paramValue = props.params;
   const { id, value, field } = {...paramValue};
-  const MealDescription = props.MealDescription;
+  let MealDescription = props.MealDescription ? props.MealDescription : "adminCall"
   let meal = value;
   const apiRef = useGridApiContext();
   console.log(" #@%#%^@$#^&@&!$#!^!!!()_#_+___#*((*#&) : ",props," ---:--- " ,MealDescription);
@@ -50,23 +50,35 @@ export function EditMealMenu(props) {
         bgcolor: "#a7c4f2",
       }}
     >
-      {/* <TextField
+      {MealDescription === "adminCall" ? 
+      <TextField
           id="country-code-select"
           select
           value={value}
           onChange={handleChange}
+          defaultValue="Select Meal"
           // SelectProps={{
           //   renderValue: (meal) => meal,
           // }}
           sx={{
             width: "180px",
           }}
+          SelectProps={{
+            renderValue: (value) => {
+                if (value === "Select Meal") {
+                  return "Select Meal";
+                }
+              return value;  
+            },
+          }}
         >
           {MealsList.map((option) => (
             <MenuItem key={option.value} value={option.label}>
               {option.label} {option.value}
             </MenuItem>
-          ))} */}
+          ))} 
+          </TextField>
+        :
 
       <TextField
         id="country-code-select"
@@ -117,6 +129,7 @@ export function EditMealMenu(props) {
           );
         })}
       </TextField>
+}
     </Box>
   );
 }
